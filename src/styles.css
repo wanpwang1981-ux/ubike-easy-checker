@@ -38,6 +38,21 @@ main {
     border: 1px solid #ddd;
 }
 
+/* Filter Section */
+#filter-section {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+#search-input, #district-filter {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
 /* Station List Sections */
 .station-list-section {
     margin-bottom: 2rem;
@@ -151,12 +166,48 @@ footer a {
     }
 
     .station-card {
-        flex-direction: column;
-        align-items: stretch;
+        flex-direction: row; /* Keep it horizontal */
+        flex-wrap: nowrap;
+        align-items: center;
+        padding: 0.8rem;
+        gap: 0.5rem;
+    }
+
+    .station-info {
+        flex: 1 1 50%; /* Allow info to take more space */
+    }
+
+    .station-info h3 {
+        font-size: 1rem; /* Smaller station name */
+        margin-bottom: 0.2rem;
+    }
+
+    .station-meta {
+        font-size: 0.8rem;
     }
 
     .station-stats {
-        justify-content: space-around;
-        margin: 1rem 0;
+        flex: 0 1 auto; /* Don't grow, shrink if needed */
+        gap: 1rem; /* Tighter gap */
+        margin: 0;
+        padding: 0 0.5rem;
+    }
+
+    .stat {
+        font-size: 1.2rem; /* Smaller numbers */
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+    }
+
+    .station-actions {
+        flex: 0 0 auto; /* Don't grow or shrink */
+        gap: 0.5rem;
+    }
+
+    .fav-btn, .map-link {
+        font-size: 1.2rem; /* Smaller buttons */
+        padding: 0.2rem;
     }
 }

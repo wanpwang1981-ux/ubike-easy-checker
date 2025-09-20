@@ -6,6 +6,8 @@ const GOOGLE_MAPS_URL = 'https://www.google.com/maps?q=';
 const statusMessageEl = document.getElementById('status-message');
 const favoritesListEl = document.getElementById('favorites-list');
 const nearbyListEl = document.getElementById('nearby-list');
+const searchInputEl = document.getElementById('search-input');
+const districtFilterEl = document.getElementById('district-filter');
 
 // --- Services / Modules ---
 
@@ -109,13 +111,24 @@ const uiService = {
     renderStations(stations, container, favoriteIds) {
         container.innerHTML = ''; // Clear previous content
         if (stations.length === 0) {
-            container.innerHTML = '<p>No stations to display.</p>';
+            container.innerHTML = '<p>No matching stations found.</p>';
             return;
         }
         stations.forEach(station => {
             const isFav = favoriteIds.includes(station.sno);
             const card = this.createStationCard(station, isFav);
             container.appendChild(card);
+        });
+    },
+
+    populateDistrictFilter(stations) {
+        const districts = [...new Set(stations.map(s => s.sarea))];
+        districts.sort();
+        districts.forEach(district => {
+            const option = document.createElement('option');
+            option.value = district;
+            option.textContent = district;
+            districtFilterEl.appendChild(option);
         });
     },
 
@@ -186,6 +199,7 @@ const app = {
 
             this.stations = this.processStations(rawStations, position);
 
+            uiService.populateDistrictFilter(this.stations);
             this.renderAll();
             uiService.hideStatus();
 
@@ -204,6 +218,8 @@ const app = {
             uiService.updateStatus('Could not get location. Loading station data anyway...');
             const rawStations = await apiService.fetchStations();
             this.stations = this.processStations(rawStations, null);
+
+            uiService.populateDistrictFilter(this.stations);
             this.renderAll();
             uiService.hideStatus();
         } catch (error) {
@@ -228,12 +244,21 @@ const app = {
     },
 
     renderAll() {
+        const searchTerm = searchInputEl.value.toLowerCase();
+        const selectedDistrict = districtFilterEl.value;
+
+        const filteredStations = this.stations.filter(s => {
+            const nameMatch = s.sna.toLowerCase().includes(searchTerm);
+            const districtMatch = !selectedDistrict || s.sarea === selectedDistrict;
+            return nameMatch && districtMatch;
+        });
+
         // Render favorites
-        const favoriteStations = this.stations.filter(s => this.favorites.includes(s.sno));
+        const favoriteStations = filteredStations.filter(s => this.favorites.includes(s.sno));
         uiService.renderStations(favoriteStations, favoritesListEl, this.favorites);
 
         // Render nearby stations (non-favorites)
-        const nearbyStations = this.stations.filter(s => !this.favorites.includes(s.sno));
+        const nearbyStations = filteredStations.filter(s => !this.favorites.includes(s.sno));
         uiService.renderStations(nearbyStations, nearbyListEl, this.favorites);
     },
 
@@ -251,8 +276,13 @@ const app = {
     },
 
     addEventListeners() {
-        // This is a placeholder for any global event listeners if needed in the future.
-        // For now, event listeners are added dynamically to the station cards.
+        searchInputEl.addEventListener('input', () => {
+            this.renderAll();
+        });
+
+        districtFilterEl.addEventListener('change', () => {
+            this.renderAll();
+        });
     }
 };
 
