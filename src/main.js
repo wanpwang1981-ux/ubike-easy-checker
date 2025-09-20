@@ -1,5 +1,5 @@
 // --- Constants ---
-const API_URL = 'https://data.ntpc.gov.tw/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/json?size=2000';
+const API_URL = 'stations.json'; // Now points to the local file
 const GOOGLE_MAPS_URL = 'https://www.google.com/maps?q=';
 
 // --- DOM Elements ---
@@ -30,12 +30,24 @@ const geolocationService = {
             if (!navigator.geolocation) {
                 return reject(new Error('Geolocation is not supported by your browser.'));
             }
+
+            // Add a manual timeout for geolocation
+            const timeoutId = setTimeout(() => {
+                reject(new Error('Geolocation timed out.'));
+            }, 10000); // 10 seconds timeout
+
             navigator.geolocation.getCurrentPosition(
-                (position) => resolve({
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                }),
-                () => reject(new Error('Unable to retrieve your location. Please grant permission.'))
+                (position) => {
+                    clearTimeout(timeoutId);
+                    resolve({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    });
+                },
+                () => {
+                    clearTimeout(timeoutId);
+                    reject(new Error('Unable to retrieve your location. Please grant permission.'));
+                }
             );
         });
     }

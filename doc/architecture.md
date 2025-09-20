@@ -14,7 +14,7 @@
 程式碼將圍繞以下幾個核心模組進行組織 (`src/main.js`):
 
 - **`apiService.js`**:
-    - `fetchStations(city)`: 負責從指定城市的YouBike API獲取所有站點的即時資料。回傳一個 Promise，解析後得到站點陣列。
+    - `fetchStations()`: 負責從本地的 `stations.json` 檔案獲取站點資料。這個JSON檔案需要透過執行外部的 `fetch_data.py` 腳本來產生與更新。
 - **`geolocationService.js`**:
     - `getCurrentPosition()`: 封裝 `navigator.geolocation.getCurrentPosition`。回傳一個 Promise，解析後得到經緯度 `{ lat, lng }`。處理用戶拒絕定位的錯誤情況。
 - **`distanceService.js`**:
@@ -69,9 +69,15 @@
    - **(分支B) 用戶拒絕**: Promise reject。`[App]` 捕捉錯誤，`[UI]` 顯示提示 "無法定位，請手動搜尋或開啟權限"。 (初期版本可簡化為僅顯示錯誤)。
 3. **資料獲取與處理**:
    - `[App]` 呼叫 `apiService.fetchStations()`。
-   - **(檢討)**: API 可能請求失敗或超時。需有 try-catch 機制，並在 `[UI]` 上顯示錯誤訊息。
+- **(檢討)**: 由於資料改為從本地 `stations.json` 讀取，前端API請求失敗的可能性降低，但仍需處理檔案不存在或格式錯誤的狀況。主要的失敗點轉移到 `fetch_data.py` 腳本的執行。
    - `[App]` 遍歷站點，呼叫 `distanceService.calculateDistance()` 計算每個站點與用戶的距離，並將 `distance` 屬性附加到站點物件上。
    - `[App]` 對站點陣列進行排序 ( `Array.sort()` )。
+
+**資料更新流程 (新)**:
+1. `[User]` 在終端機執行 `python fetch_data.py`。
+2. `[Script]` 請求 YouBike API。
+3. `[Script]` 將回傳的 JSON 資料儲存至 `src/stations.json`。
+4. `[User]` 重新整理或開啟 `src/index.html` 頁面以查看最新資料。
 4. **渲染畫面**:
    - `[App]` 呼叫 `favoriteService.getFavorites()` 取得最愛列表。
    - `[App]` 呼叫 `uiService.renderStations()`，將排序後的站點資料和最愛列表傳入。
