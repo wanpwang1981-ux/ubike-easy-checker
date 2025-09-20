@@ -9,35 +9,32 @@
 </head>
 <body>
     <header>
-        <h1>UBike 通勤即時查詢</h1>
-        <p>快速找到最近的YouBike站點，輕鬆借還車！</p>
+        <h1>UBike 通勤即時查詢 (台北市)</h1>
+        <p id="status-message">正在載入...</p>
     </header>
 
     <main>
-        <section id="status-section">
-            <div id="status-message" class="status">正在定位並擷取資料...</div>
-        </section>
+        <div class="controls">
+            <div class="filters">
+                <input type="text" id="search-input" placeholder="依站點名稱搜尋...">
+                <select id="district-filter">
+                    <option value="">所有行政區</option>
+                </select>
+            </div>
+            <div class="favorites-io">
+                <button id="export-btn" title="匯出最愛">📤 匯出</button>
+                <button id="import-btn" title="匯入最愛">📥 匯入</button>
+            </div>
+        </div>
 
-        <section id="filter-section">
-            <input type="text" id="search-input" placeholder="搜尋站點名稱...">
-            <select id="district-filter">
-                <option value="">所有行政區</option>
-                <!-- Districts will be populated by JS -->
-            </select>
-        </section>
+        <div id="import-container" class="hidden">
+            <textarea id="import-textarea" placeholder="貼上您之前匯出的最愛代碼..."></textarea>
+            <button id="import-confirm-btn">確認匯入</button>
+        </div>
+
 
         <section id="favorites-section" class="station-list-section">
-            <div class="section-header">
-                <h2>⭐ 我的最愛</h2>
-                <div class="import-export-controls">
-                    <button id="export-btn">匯出</button>
-                    <button id="import-btn">匯入</button>
-                </div>
-            </div>
-            <div id="import-container" class="hidden">
-                <textarea id="import-textarea" placeholder="在此貼上您的最愛代碼..."></textarea>
-                <button id="import-confirm-btn">確認匯入</button>
-            </div>
+            <h2>⭐ 我的最愛</h2>
             <div id="favorites-list" class="station-list">
                 <!-- Favorite stations will be rendered here by JS -->
             </div>
