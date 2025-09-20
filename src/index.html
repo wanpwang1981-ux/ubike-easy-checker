@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UBike 通勤即時查詢</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="main.js" defer></script>
+</head>
+<body>
+    <header>
+        <h1>UBike 通勤即時查詢</h1>
+        <p>快速找到最近的YouBike站點，輕鬆借還車！</p>
+    </header>
+
+    <main>
+        <section id="status-section">
+            <div id="status-message" class="status">正在定位並擷取資料...</div>
+        </section>
+
+        <section id="favorites-section" class="station-list-section">
+            <h2>⭐ 我的最愛</h2>
+            <div id="favorites-list" class="station-list">
+                <!-- Favorite stations will be rendered here by JS -->
+            </div>
+        </section>
+
+        <section id="nearby-section" class="station-list-section">
+            <h2>📍 附近站點</h2>
+            <div id="nearby-list" class="station-list">
+                <!-- Nearby stations will be rendered here by JS -->
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>資料來源：<a href="https://data.gov.tw/dataset/137993" target="_blank" rel="noopener noreferrer">政府資料開放平台</a></p>
+        <p>Made with 🏴‍☠️ by Jules the Pirate Coder</p>
+    </footer>
+
+</body>
+</html>

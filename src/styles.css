@@ -1,0 +1,162 @@
+/* General Body Styles */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+/* Header */
+header {
+    background-color: #007bff;
+    color: #fff;
+    padding: 1rem 1.5rem;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+/* Main Content */
+main {
+    padding: 1rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Status Message */
+.status {
+    text-align: center;
+    padding: 1rem;
+    background-color: #fff;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #ddd;
+}
+
+/* Station List Sections */
+.station-list-section {
+    margin-bottom: 2rem;
+}
+
+.station-list-section h2 {
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 0.5rem;
+    color: #0056b3;
+}
+
+/* Station Card */
+.station-card {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.station-info {
+    flex: 1 1 300px; /* Grow, shrink, basis */
+}
+
+.station-info h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.2rem;
+}
+
+.station-meta {
+    color: #555;
+    font-size: 0.9rem;
+}
+
+.station-stats {
+    display: flex;
+    gap: 1.5rem;
+    flex: 1 1 200px;
+    justify-content: center;
+    text-align: center;
+}
+
+.stat {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.available-bikes {
+    color: #28a745; /* Green */
+}
+
+.available-docks {
+    color: #ffc107; /* Orange */
+}
+
+.station-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.fav-btn, .map-link {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.5rem;
+    padding: 0.5rem;
+    color: #ccc;
+}
+
+.fav-btn.is-favorite {
+    color: #ffc107; /* Gold for favorite */
+}
+
+.map-link {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 1.2rem;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    font-size: 0.9rem;
+    color: #777;
+    background-color: #e9ecef;
+}
+
+footer a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    header h1 {
+        font-size: 1.5rem;
+    }
+
+    .station-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .station-stats {
+        justify-content: space-around;
+        margin: 1rem 0;
+    }
+}
