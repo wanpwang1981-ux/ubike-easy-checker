@@ -31,10 +31,9 @@ const apiService = {
             if (!response.ok) {
                 throw new Error(`API request failed with status ${response.status}`);
             }
-            // The response from the Taipei City API is a nested object.
+            // The new stations.json is a direct array, no nesting.
             const data = await response.json();
-            // The actual station data is in the 'retVal' property.
-            return data.retVal || data; // Handle both direct array and nested object
+            return data;
         } catch (error) {
             console.error('Error fetching station data:', error);
             throw error;
@@ -246,8 +245,23 @@ const app = {
 
     exportFavorites() {
         const favs = favoriteService.get();
-        if (favs.length === 0) return alert("您沒有任何最愛站點可以匯出。");
-        prompt("請複製您的最愛代碼:", JSON.stringify(favs));
+        if (favs.length === 0) {
+            alert("您沒有任何最愛站點可以匯出。");
+            return;
+        }
+
+        const dataStr = JSON.stringify(favs, null, 2); // Pretty print JSON
+        const blob = new Blob([dataStr], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", "ubike_favorites.txt");
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url); // Clean up the object URL
     },
 
     importFavorites() {
