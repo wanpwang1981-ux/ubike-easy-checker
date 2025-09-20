@@ -58,10 +58,59 @@ main {
     margin-bottom: 2rem;
 }
 
-.station-list-section h2 {
+.station-list-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     border-bottom: 2px solid #007bff;
+    margin-bottom: 1rem;
+}
+
+.station-list-section h2 {
     padding-bottom: 0.5rem;
     color: #0056b3;
+    margin: 0;
+}
+
+.import-export-controls button {
+    padding: 0.3rem 0.8rem;
+    border: 1px solid #007bff;
+    background-color: #fff;
+    color: #007bff;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 0.5rem;
+}
+
+.import-export-controls button:hover {
+    background-color: #e9f4ff;
+}
+
+#import-container {
+    margin-bottom: 1rem;
+}
+
+#import-container.hidden {
+    display: none;
+}
+
+#import-textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 0.5rem;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-bottom: 0.5rem;
+    box-sizing: border-box; /* Important for width */
+}
+
+#import-confirm-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    background-color: #28a745;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
 }
 
 /* Station Card */

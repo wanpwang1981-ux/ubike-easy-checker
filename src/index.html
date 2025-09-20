@@ -27,7 +27,17 @@
         </section>
 
         <section id="favorites-section" class="station-list-section">
-            <h2>⭐ 我的最愛</h2>
+            <div class="section-header">
+                <h2>⭐ 我的最愛</h2>
+                <div class="import-export-controls">
+                    <button id="export-btn">匯出</button>
+                    <button id="import-btn">匯入</button>
+                </div>
+            </div>
+            <div id="import-container" class="hidden">
+                <textarea id="import-textarea" placeholder="在此貼上您的最愛代碼..."></textarea>
+                <button id="import-confirm-btn">確認匯入</button>
+            </div>
             <div id="favorites-list" class="station-list">
                 <!-- Favorite stations will be rendered here by JS -->
             </div>

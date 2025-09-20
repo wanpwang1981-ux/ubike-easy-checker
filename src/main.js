@@ -8,6 +8,11 @@ const favoritesListEl = document.getElementById('favorites-list');
 const nearbyListEl = document.getElementById('nearby-list');
 const searchInputEl = document.getElementById('search-input');
 const districtFilterEl = document.getElementById('district-filter');
+const exportBtn = document.getElementById('export-btn');
+const importBtn = document.getElementById('import-btn');
+const importContainer = document.getElementById('import-container');
+const importTextarea = document.getElementById('import-textarea');
+const importConfirmBtn = document.getElementById('import-confirm-btn');
 
 // --- Services / Modules ---
 
@@ -108,10 +113,19 @@ const favoriteService = {
 };
 
 const uiService = {
-    renderStations(stations, container, favoriteIds) {
+    renderStations(stations, container, favoriteIds, isFavoritesSection = false) {
         container.innerHTML = ''; // Clear previous content
         if (stations.length === 0) {
-            container.innerHTML = '<p>No matching stations found.</p>';
+            if (isFavoritesSection) {
+                // Don't show a message if the favorites list is just empty and no filter is active
+                if (favoriteService.get().length > 0) {
+                     container.innerHTML = '<p>您收藏的站點不符合目前的篩選條件。</p>';
+                } else {
+                    container.innerHTML = '<p>您尚未加入任何最愛站點。</p>';
+                }
+            } else {
+                container.innerHTML = '<p>找不到符合條件的站點。</p>';
+            }
             return;
         }
         stations.forEach(station => {
@@ -249,17 +263,18 @@ const app = {
 
         const filteredStations = this.stations.filter(s => {
             const nameMatch = s.sna.toLowerCase().includes(searchTerm);
-            const districtMatch = !selectedDistrict || s.sarea === selectedDistrict;
+            // More explicit check for the "All Districts" option
+            const districtMatch = (selectedDistrict === "") || (s.sarea === selectedDistrict);
             return nameMatch && districtMatch;
         });
 
         // Render favorites
         const favoriteStations = filteredStations.filter(s => this.favorites.includes(s.sno));
-        uiService.renderStations(favoriteStations, favoritesListEl, this.favorites);
+        uiService.renderStations(favoriteStations, favoritesListEl, this.favorites, true);
 
         // Render nearby stations (non-favorites)
         const nearbyStations = filteredStations.filter(s => !this.favorites.includes(s.sno));
-        uiService.renderStations(nearbyStations, nearbyListEl, this.favorites);
+        uiService.renderStations(nearbyStations, nearbyListEl, this.favorites, false);
     },
 
     toggleFavorite(stationId, buttonElement) {
@@ -276,13 +291,53 @@ const app = {
     },
 
     addEventListeners() {
-        searchInputEl.addEventListener('input', () => {
-            this.renderAll();
-        });
+        searchInputEl.addEventListener('input', () => this.renderAll());
+        districtFilterEl.addEventListener('change', () => this.renderAll());
+        exportBtn.addEventListener('click', () => this.exportFavorites());
+        importBtn.addEventListener('click', () => this.showImportView());
+        importConfirmBtn.addEventListener('click', () => this.importFavorites());
+    },
 
-        districtFilterEl.addEventListener('change', () => {
+    exportFavorites() {
+        const favorites = favoriteService.get();
+        if (favorites.length === 0) {
+            alert("您沒有任何最愛站點可以匯出。");
+            return;
+        }
+        const exportString = JSON.stringify(favorites);
+        prompt("請複製您的最愛代碼:", exportString);
+    },
+
+    showImportView() {
+        importContainer.classList.toggle('hidden');
+    },
+
+    importFavorites() {
+        const importString = importTextarea.value.trim();
+        if (!importString) {
+            alert("請貼上您的最愛代碼。");
+            return;
+        }
+        try {
+            const importedFavorites = JSON.parse(importString);
+            if (!Array.isArray(importedFavorites)) {
+                throw new Error("Invalid format");
+            }
+            // Basic validation for station IDs (should be strings)
+            if (!importedFavorites.every(id => typeof id === 'string')) {
+                 throw new Error("Invalid format");
+            }
+
+            favoriteService.save(new Set(importedFavorites));
+            this.favorites = favoriteService.get();
             this.renderAll();
-        });
+            importTextarea.value = '';
+            importContainer.classList.add('hidden');
+            alert(`成功匯入 ${importedFavorites.length} 個最愛站點！`);
+
+        } catch (error) {
+            alert("匯入失敗！請確認您的代碼格式是否正確。");
+        }
     }
 };
 
