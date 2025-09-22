@@ -1,9 +1,11 @@
 // --- Constants ---
 const API_URL = 'stations.json';
+const VERSION_URL = '../version.md';
 const GOOGLE_MAPS_URL = 'https://www.google.com/maps?q=';
+const FAVORITES_KEY = 'ubike-favorites';
 
 // --- DOM Elements ---
-let statusMessageEl, favoritesListEl, nearbyListEl, searchInputEl, cityFilterEl, districtFilterEl, exportBtn, importBtn, importFileInput;
+let statusMessageEl, favoritesListEl, nearbyListEl, searchInputEl, cityFilterEl, districtFilterEl, exportBtn, importBtn, importFileInput, versionDisplayEl;
 
 function initializeDOMElements() {
     statusMessageEl = document.getElementById('status-message');
@@ -15,57 +17,76 @@ function initializeDOMElements() {
     exportBtn = document.getElementById('export-btn');
     importBtn = document.getElementById('import-btn');
     importFileInput = document.getElementById('import-file-input');
+    versionDisplayEl = document.getElementById('version-display');
 }
 
 // --- Services ---
 const apiService = {
-    async fetchStations() {
+    async fetchData(url) {
         try {
-            const response = await fetch(API_URL);
-            if (!response.ok) throw new Error(`API request failed: ${response.status}`);
-            return await response.json();
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+            return response;
         } catch (error) {
-            console.error('Error fetching station data:', error);
+            console.error(`Error fetching from ${url}:`, error);
             throw error;
+        }
+    },
+    async fetchStations() {
+        const response = await this.fetchData(API_URL);
+        return await response.json();
+    },
+    async fetchVersion() {
+        try {
+            const response = await this.fetchData(VERSION_URL);
+            const text = await response.text();
+            const versionMatch = text.match(/## (v[\d.]+)/);
+            return versionMatch ? versionMatch[1] : 'N/A';
+        } catch (error) {
+            console.error('Error fetching version:', error);
+            return 'N/A';
         }
     }
 };
 
 const favoriteService = {
-    key: 'ubike-favorites',
     get() {
         try {
-            const favorites = localStorage.getItem(this.key);
+            const favorites = localStorage.getItem(FAVORITES_KEY);
             return new Set(favorites ? JSON.parse(favorites) : []);
-        } catch (e) { return new Set(); }
+        } catch (e) {
+            console.error("Failed to parse favorites from localStorage", e);
+            return new Set();
+        }
     },
     save(favorites) {
-        localStorage.setItem(this.key, JSON.stringify(Array.from(favorites)));
+        localStorage.setItem(FAVORITES_KEY, JSON.stringify(Array.from(favorites)));
     },
-    toggle(stationId) {
-        const favorites = this.get();
-        if (favorites.has(stationId)) {
-            favorites.delete(stationId);
+    toggle(stationId, favoritesSet) {
+        if (favoritesSet.has(stationId)) {
+            favoritesSet.delete(stationId);
         } else {
-            favorites.add(stationId);
+            favoritesSet.add(stationId);
         }
-        this.save(favorites);
-        return favorites;
+        this.save(favoritesSet);
+        return favoritesSet;
     }
 };
 
 const geolocationService = {
     getCurrentPosition() {
         return new Promise((resolve, reject) => {
-            if (!navigator.geolocation) return reject(new Error('Geolocation not supported.'));
-            navigator.geolocation.getCurrentPosition(resolve, () => reject(new Error('Unable to retrieve location.')), { timeout: 10000 });
+            if (!navigator.geolocation) {
+                return reject(new Error('Geolocation is not supported by your browser.'));
+            }
+            navigator.geolocation.getCurrentPosition(resolve, () => reject(new Error('Unable to retrieve your location.')), { timeout: 10000 });
         });
     }
 };
 
 const distanceService = {
     calculate(lat1, lon1, lat2, lon2) {
-        const R = 6371;
+        const R = 6371; // Radius of the Earth in km
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;
         const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
@@ -78,7 +99,8 @@ const uiService = {
     renderStations(stations, container, allFavorites) {
         container.innerHTML = '';
         if (!stations || stations.length === 0) {
-            container.innerHTML = `<p>${container === favoritesListEl ? '無收藏站點，或最愛站點不符合篩選條件。' : '找不到符合條件的站點。'}</p>`;
+            const message = container === favoritesListEl ? '無收藏站點，或最愛站點不符合篩選條件。' : '找不到符合條件的站點。';
+            container.innerHTML = `<p class="empty-list-message">${message}</p>`;
             return;
         }
         stations.forEach(station => {
@@ -87,23 +109,23 @@ const uiService = {
             container.appendChild(card);
         });
     },
+
     createStationCard(station, isFav) {
         const card = document.createElement('div');
         card.className = 'station-card';
         card.dataset.stationId = station.sno;
         const distanceText = station.distance ? `${station.distance.toFixed(2)} km` : '';
-
-        const favButtonText = isFav ? '⭐ 移除' : '⭐ 新增';
+        const favButtonText = isFav ? '移除最愛' : '加入最愛';
         const favButtonTitle = isFav ? '從我的最愛中移除' : '加到我的最愛';
 
         card.innerHTML = `
             <div class="station-info">
-                <h3>${station.sna}</h3>
+                <h3>${station.sna} <span class="station-city">(${station.city === 'Taipei' ? '北市' : '新北'})</span></h3>
                 <p class="station-meta">${station.sarea} | ${distanceText}</p>
             </div>
             <div class="station-stats">
-                <div class="stat available-bikes"><span>${station.sbi}</span><div class="stat-label">可借</div></div>
-                <div class="stat available-docks"><span>${station.bemp}</span><div class="stat-label">可還</div></div>
+                <div class="stat available-bikes" title="可借車輛"><span>${station.sbi}</span><div class="stat-label">可借</div></div>
+                <div class="stat available-docks" title="可還空位"><span>${station.bemp}</span><div class="stat-label">可還</div></div>
             </div>
             <div class="station-actions">
                 <button class="fav-btn ${isFav ? 'is-favorite' : ''}" title="${favButtonTitle}">${favButtonText}</button>
@@ -113,32 +135,36 @@ const uiService = {
         card.querySelector('.fav-btn').addEventListener('click', () => app.toggleFavorite(station.sno));
         return card;
     },
+
     updateStatus(message, isError = false) {
         if (statusMessageEl) {
             statusMessageEl.textContent = message;
-            statusMessageEl.style.color = isError ? 'red' : 'inherit';
+            statusMessageEl.className = isError ? 'status-error' : 'status-info';
         }
     },
+
+    setVersion(version) {
+         if (versionDisplayEl) {
+            versionDisplayEl.textContent = version;
+        }
+    },
+
     populateDistrictFilter(stations, selectedCity) {
         if (!districtFilterEl) return;
+        const originalValue = districtFilterEl.value;
         districtFilterEl.innerHTML = '<option value="">所有行政區</option>';
-        let stationsToFilter = stations;
 
-        if (selectedCity) {
-            stationsToFilter = stations.filter(s => {
-                if (selectedCity === 'TPE') return s.sno.startsWith('5001');
-                if (selectedCity === 'NTP') return s.sno.startsWith('5002');
-                return false;
-            });
-        }
+        const stationsToFilter = selectedCity ? stations.filter(s => s.city === selectedCity) : stations;
 
-        const districts = [...new Set(stationsToFilter.map(s => s.sarea))].sort();
+        const districts = [...new Set(stationsToFilter.map(s => s.sarea))].sort((a, b) => a.localeCompare(b, 'zh-Hant'));
         districts.forEach(district => {
+            if (!district) return; // Skip if district is null or undefined
             const option = document.createElement('option');
             option.value = district;
             option.textContent = district;
             districtFilterEl.appendChild(option);
         });
+        districtFilterEl.value = originalValue;
     }
 };
 
@@ -152,15 +178,18 @@ const app = {
         this.addEventListeners();
         this.favorites = favoriteService.get();
 
+        apiService.fetchVersion().then(uiService.setVersion);
+
         try {
-            uiService.updateStatus('Getting your location...');
+            uiService.updateStatus('正在取得您的位置...');
             const position = await geolocationService.getCurrentPosition();
             this.userPosition = { lat: position.coords.latitude, lng: position.coords.longitude };
-            uiService.updateStatus('Location found. Fetching station data...');
+            uiService.updateStatus('已取得位置，正在讀取站點資料...');
         } catch (error) {
             uiService.updateStatus(error.message, true);
+        } finally {
+            await this.fetchAndRender();
         }
-        await this.fetchAndRender();
     },
 
     async fetchAndRender() {
@@ -169,34 +198,27 @@ const app = {
             this.stations = this.processStations(rawStations);
             uiService.populateDistrictFilter(this.stations, cityFilterEl.value);
             this.renderAll();
-            uiService.updateStatus('Data loaded successfully.');
+            uiService.updateStatus('資料載入成功！', false);
         } catch (error) {
-            uiService.updateStatus('Failed to load station data.', true);
+            uiService.updateStatus('讀取站點資料失敗，請稍後再試。', true);
         }
     },
 
     processStations(rawStations) {
         if (!Array.isArray(rawStations)) return [];
-        let processed = rawStations
-            .filter(station => station.act === "1")
-            .map(station => {
-                const distance = this.userPosition ? distanceService.calculate(this.userPosition.lat, this.userPosition.lng, station.lat, station.lng) : null;
-                return { ...station, distance };
-            });
+        let processed = rawStations.map(station => {
+            const distance = this.userPosition ? distanceService.calculate(this.userPosition.lat, this.userPosition.lng, station.lat, station.lng) : null;
+            return { ...station, distance };
+        });
 
         if (this.userPosition) {
             processed.sort((a, b) => a.distance - b.distance);
-        } else {
-            for (let i = processed.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [processed[i], processed[j]] = [processed[j], processed[i]];
-            }
         }
         return processed;
     },
 
     toggleFavorite(stationId) {
-        this.favorites = favoriteService.toggle(stationId);
+        this.favorites = favoriteService.toggle(stationId, this.favorites);
         this.renderAll();
     },
 
@@ -204,7 +226,7 @@ const app = {
         searchInputEl.addEventListener('input', () => this.renderAll());
         districtFilterEl.addEventListener('change', () => this.renderAll());
         cityFilterEl.addEventListener('change', () => {
-            districtFilterEl.value = '';
+            districtFilterEl.value = ''; // Reset district filter
             uiService.populateDistrictFilter(this.stations, cityFilterEl.value);
             this.renderAll();
         });
@@ -224,11 +246,12 @@ const app = {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.setAttribute("href", url);
-        link.setAttribute("download", "ubike_favorites.txt");
+        link.setAttribute("download", "youbike_favorites.txt");
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+        alert(`已成功匯出 ${favs.length} 個最愛站點！`);
     },
 
     importFavorites(event) {
@@ -242,14 +265,18 @@ const app = {
                 if (!Array.isArray(imported) || !imported.every(id => typeof id === 'string')) {
                     throw new Error("Invalid file content");
                 }
-                this.favorites = new Set(imported);
-                favoriteService.save(this.favorites);
+                const currentFavorites = favoriteService.get();
+                const newFavorites = new Set([...currentFavorites, ...imported]);
+
+                favoriteService.save(newFavorites);
+                this.favorites = newFavorites;
+
                 this.renderAll();
                 alert(`成功匯入 ${imported.length} 個最愛站點！`);
             } catch (error) {
                 alert("匯入失敗！請確認檔案內容與格式是否正確。");
             } finally {
-                event.target.value = null;
+                event.target.value = null; // Reset file input
             }
         };
         reader.onerror = () => alert("讀取檔案時發生錯誤。");
@@ -262,25 +289,29 @@ const app = {
         const selectedDistrict = districtFilterEl.value;
 
         const filteredStations = this.stations.filter(s => {
-            const cityMatch = !selectedCity || (selectedCity === 'TPE' && s.sno.startsWith('5001')) || (selectedCity === 'NTP' && s.sno.startsWith('5002'));
+            const cityMatch = !selectedCity || s.city === selectedCity;
             const districtMatch = !selectedDistrict || s.sarea === selectedDistrict;
-            const searchMatch = s.sna.toLowerCase().includes(searchTerm);
+            const searchMatch = s.sna.toLowerCase().includes(searchTerm) || s.ar.toLowerCase().includes(searchTerm);
             return cityMatch && districtMatch && searchMatch;
         });
 
-        const favoriteStations = filteredStations.filter(s => this.favorites.has(s.sno));
-        let nearbyStations = filteredStations.filter(s => !this.favorites.has(s.sno));
+        const favoriteStations = [];
+        const nearbyStations = [];
+
+        filteredStations.forEach(s => {
+            if (this.favorites.has(s.sno)) {
+                favoriteStations.push(s);
+            } else {
+                nearbyStations.push(s);
+            }
+        });
 
         const noFiltersApplied = !searchTerm && !selectedCity && !selectedDistrict;
-        if (noFiltersApplied) {
-            nearbyStations = nearbyStations.slice(0, 10);
-        }
+        const limitedNearby = noFiltersApplied ? nearbyStations.slice(0, 10) : nearbyStations;
 
         uiService.renderStations(favoriteStations, favoritesListEl, this.favorites);
-        uiService.renderStations(nearbyStations, nearbyListEl, this.favorites);
+        uiService.renderStations(limitedNearby, nearbyListEl, this.favorites);
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    app.init();
-});
+app.init();

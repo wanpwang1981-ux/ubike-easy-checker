@@ -2,88 +2,83 @@ import requests
 import json
 import os
 
-# --- Configuration ---
-TAIPEI_API_URL = "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json"
-NEW_TAIPEI_API_URL = "https://data.ntpc.gov.tw/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/json?size=2000"
-OUTPUT_PATH = os.path.join("src", "stations.json")
+# Data sources
+TAIPEI_URL = "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json"
+NEW_TAIPEI_URL = "https://data.ntpc.gov.tw/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/json?size=2000"
 
-def fetch_data(url, source_name):
-    """Fetches data from a given URL and returns the JSON content."""
-    try:
-        print(f"Fetching data from {source_name}...")
-        response = requests.get(url, timeout=30)
-        response.raise_for_status()
-        print(f"Successfully fetched data from {source_name}.")
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching data from {source_name}: {e}")
-        return None
-
-def standardize_station_data(station):
+def fetch_and_process_data():
     """
-    Ensures that a station dictionary from any source conforms to a standard format.
-    Handles different key names for coordinates from different APIs.
+    Fetches data from Taipei and New Taipei City YouBike APIs,
+    processes it into a unified format, and saves it to stations.json.
     """
-    lat_str = station.get('latitude') or station.get('lat')
-    lng_str = station.get('longitude') or station.get('lng')
-
-    lat, lng = 0.0, 0.0
-    try:
-        if lat_str is not None: lat = float(lat_str)
-    except (ValueError, TypeError):
-        print(f"Warning: Could not parse latitude for station {station.get('sno')}. Value: {lat_str}")
-    try:
-        if lng_str is not None: lng = float(lng_str)
-    except (ValueError, TypeError):
-        print(f"Warning: Could not parse longitude for station {station.get('sno')}. Value: {lng_str}")
-
-    sbi = int(station.get('sbi', 0)) if str(station.get('sbi', 0)).isdigit() else 0
-    bemp = int(station.get('bemp', 0)) if str(station.get('bemp', 0)).isdigit() else 0
-
-    return {
-        'sno': str(station.get('sno')),
-        'sna': str(station.get('sna', '')).replace('YouBike2.0_', ''),
-        'sarea': str(station.get('sarea', '')),
-        'sbi': sbi,
-        'bemp': bemp,
-        'lat': lat,
-        'lng': lng,
-        'act': str(station.get('act', '0')),
-        'ar': str(station.get('ar', '')),
-        'mday': str(station.get('mday', ''))
-    }
-
-def main():
-    """Main function to fetch, merge, and save YouBike data."""
-    taipei_data = fetch_data(TAIPEI_API_URL, "Taipei City") or []
-    new_taipei_data = fetch_data(NEW_TAIPEI_API_URL, "New Taipei City") or []
-
-    if not taipei_data and not new_taipei_data:
-        print("Failed to fetch data from all sources. Aborting.")
-        return
-
     all_stations = []
-    processed_sno = set()
-    combined_data = taipei_data + new_taipei_data
 
-    for station in combined_data:
-        sno = station.get('sno')
-        if sno and sno not in processed_sno:
-            standardized = standardize_station_data(station)
-            all_stations.append(standardized)
-            processed_sno.add(sno)
-
-    print(f"\nProcessed {len(taipei_data)} stations from Taipei City.")
-    print(f"Processed {len(new_taipei_data)} stations from New Taipei City.")
-    print(f"Total unique stations: {len(all_stations)}")
-
-    os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
+    # --- Process Taipei Data ---
     try:
-        with open(OUTPUT_PATH, 'w', encoding='utf-8') as f:
-            json.dump(all_stations, f, ensure_ascii=False, indent=4)
-        print(f"Successfully saved combined data to {OUTPUT_PATH}")
+        response_taipei = requests.get(TAIPEI_URL)
+        response_taipei.raise_for_status()
+        data_taipei = response_taipei.json()
+
+        for station in data_taipei:
+            # Skip stations that are not in service
+            if station.get('act') == '0':
+                continue
+
+            # Remove "YouBike2.0_" prefix from station name
+            station_name = station.get('sna', '').replace('YouBike2.0_', '')
+
+            all_stations.append({
+                "city": "Taipei",
+                "sno": station.get('sno'),
+                "sna": station_name,
+                "sarea": station.get('sarea'),
+                "ar": station.get('ar'),
+                "lat": float(station.get('latitude', 0)),
+                "lng": float(station.get('longitude', 0)),
+                "sbi": int(station.get('available_rent_bikes', 0)),
+                "bemp": int(station.get('available_return_bikes', 0)),
+            })
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching Taipei data: {e}")
+    except json.JSONDecodeError:
+        print("Error decoding Taipei JSON data.")
+
+    # --- Process New Taipei Data ---
+    try:
+        response_new_taipei = requests.get(NEW_TAIPEI_URL)
+        response_new_taipei.raise_for_status()
+        data_new_taipei = response_new_taipei.json()
+
+        for station in data_new_taipei:
+             # Skip stations that are not in service
+            if station.get('act') == '0':
+                continue
+
+            all_stations.append({
+                "city": "New Taipei",
+                "sno": station.get('sno'),
+                "sna": station.get('sna'),
+                "sarea": station.get('sarea'),
+                "ar": station.get('ar'),
+                "lat": float(station.get('lat', 0)),
+                "lng": float(station.get('lng', 0)),
+                "sbi": int(station.get('sbi', 0)),
+                "bemp": int(station.get('bemp', 0)),
+            })
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching New Taipei data: {e}")
+    except json.JSONDecodeError:
+        print("Error decoding New Taipei JSON data.")
+
+    # --- Save to file ---
+    output_path = os.path.join('src', 'stations.json')
+    try:
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(all_stations, f, ensure_ascii=False, indent=2)
+        print(f"Successfully fetched and processed data for {len(all_stations)} stations.")
+        print(f"Data saved to {output_path}")
     except IOError as e:
-        print(f"Error writing to file {OUTPUT_PATH}: {e}")
+        print(f"Error writing to file {output_path}: {e}")
 
 if __name__ == "__main__":
-    main()
+    fetch_and_process_data()
