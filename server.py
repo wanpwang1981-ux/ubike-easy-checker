@@ -6,7 +6,6 @@ PORT = 8000
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-        # Serve from the root directory so src/index.html works
         super().__init__(*args, **kwargs)
 
 print(f"Starting server at port {PORT}...")

@@ -1,262 +1,228 @@
-/* General Body Styles */
+/* General Body & Typography */
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     line-height: 1.6;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
+    background-color: #f4f7f6;
     color: #333;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1rem;
 }
 
 /* Header */
 header {
     background-color: #007bff;
-    color: #fff;
-    padding: 1rem 1.5rem;
+    color: white;
+    padding: 1.5rem 1rem;
     text-align: center;
+    border-bottom: 4px solid #0056b3;
 }
 
 header h1 {
     margin: 0;
-    font-size: 1.8rem;
+    font-size: 2rem;
+}
+
+#status-message {
+    margin-top: 0.5rem;
+    font-style: italic;
+    color: #d1eaff;
 }
 
 /* Main Content */
 main {
     padding: 1rem;
-    max-width: 900px;
-    margin: 0 auto;
 }
 
-/* Status Message */
-.status {
-    text-align: center;
+/* Controls & Filters */
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
     padding: 1rem;
     background-color: #fff;
     border-radius: 8px;
-    margin-bottom: 1.5rem;
-    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Filter Section */
-#filter-section {
+.filters {
+    flex: 3;
     display: flex;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    gap: 0.5rem;
 }
 
-#search-input, #district-filter {
-    width: 100%;
-    padding: 0.8rem;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 1rem;
-}
-
-/* Station List Sections */
-.station-list-section {
-    margin-bottom: 2rem;
-}
-
-.station-list-section .section-header {
+.favorites-io {
+    flex: 1;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid #007bff;
-    margin-bottom: 1rem;
+    gap: 0.5rem;
+    justify-content: flex-end;
 }
 
-.station-list-section h2 {
-    padding-bottom: 0.5rem;
-    color: #0056b3;
-    margin: 0;
-}
-
-.import-export-controls button {
-    padding: 0.3rem 0.8rem;
-    border: 1px solid #007bff;
-    background-color: #fff;
-    color: #007bff;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-left: 0.5rem;
-}
-
-.import-export-controls button:hover {
-    background-color: #e9f4ff;
-}
-
-#import-container {
-    margin-bottom: 1rem;
-}
-
-#import-container.hidden {
-    display: none;
-}
-
-#import-textarea {
+#search-input,
+select {
     width: 100%;
-    min-height: 80px;
-    padding: 0.5rem;
-    border-radius: 5px;
+    padding: 0.75rem;
     border: 1px solid #ccc;
-    margin-bottom: 0.5rem;
-    box-sizing: border-box; /* Important for width */
+    border-radius: 4px;
+    font-size: 1rem;
+    background-color: #fff;
 }
 
-#import-confirm-btn {
-    padding: 0.5rem 1rem;
-    border: none;
-    background-color: #28a745;
+#search-input {
+    min-width: 200px;
+}
+
+.favorites-io button {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    background-color: #6c757d;
     color: white;
-    border-radius: 5px;
+    border: none;
+    border-radius: 4px;
     cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.favorites-io button:hover {
+    background-color: #5a6268;
+}
+
+
+/* Station Lists */
+.station-list-section h2 {
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    color: #0056b3;
+}
+
+.station-list {
+    display: grid;
+    gap: 1rem;
 }
 
 /* Station Card */
 .station-card {
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 1rem;
-    margin-bottom: 1rem;
     display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
     align-items: center;
-    gap: 1rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    justify-content: space-between;
+    padding: 1rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    transition: box-shadow 0.2s;
+}
+
+.station-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 .station-info {
-    flex: 1 1 300px; /* Grow, shrink, basis */
+    flex-grow: 1;
 }
 
 .station-info h3 {
-    margin: 0 0 0.5rem 0;
-    font-size: 1.2rem;
+    margin: 0 0 0.25rem;
+    font-size: 1.1rem;
 }
 
 .station-meta {
-    color: #555;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    color: #666;
+    margin: 0;
 }
 
 .station-stats {
     display: flex;
-    gap: 1.5rem;
-    flex: 1 1 200px;
-    justify-content: center;
+    gap: 1rem;
     text-align: center;
+    margin: 0 1.5rem;
 }
 
-.stat {
+.stat span {
     font-size: 1.5rem;
     font-weight: bold;
 }
 
+.available-bikes span {
+    color: #28a745;
+}
+
+.available-docks span {
+    color: #ffc107;
+}
+
 .stat-label {
-    font-size: 0.8rem;
-    color: #666;
-}
-
-.available-bikes {
-    color: #28a745; /* Green */
-}
-
-.available-docks {
-    color: #ffc107; /* Orange */
+    font-size: 0.75rem;
+    color: #555;
 }
 
 .station-actions {
     display: flex;
-    gap: 1rem;
-    align-items: center;
+    gap: 0.5rem;
 }
 
-.fav-btn, .map-link {
+.station-actions button,
+.station-actions a {
     background: none;
     border: none;
+    font-size: 1rem; /* Adjusted for text */
     cursor: pointer;
-    font-size: 1.5rem;
     padding: 0.5rem;
-    color: #ccc;
+    line-height: 1;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.station-actions button:hover {
+    background-color: #f0f0f0;
 }
 
 .fav-btn.is-favorite {
-    color: #ffc107; /* Gold for favorite */
+    background-color: #fff0c1;
+    font-weight: bold;
 }
 
-.map-link {
-    color: #007bff;
-    text-decoration: none;
-    font-size: 1.2rem;
-}
 
 /* Footer */
 footer {
     text-align: center;
-    padding: 1.5rem;
     margin-top: 2rem;
-    font-size: 0.9rem;
-    color: #777;
-    background-color: #e9ecef;
+    padding: 1rem;
+    font-size: 0.85rem;
+    color: #666;
+    border-top: 1px solid #ddd;
 }
 
-footer a {
-    color: #007bff;
-    text-decoration: none;
+footer p {
+    margin: 0.25rem 0;
 }
 
 /* Responsive Design */
-@media (max-width: 600px) {
-    header h1 {
-        font-size: 1.5rem;
+@media (max-width: 768px) {
+    .controls, .filters {
+        flex-direction: column;
     }
 
     .station-card {
-        flex-direction: row; /* Keep it horizontal */
-        flex-wrap: nowrap;
-        align-items: center;
-        padding: 0.8rem;
-        gap: 0.5rem;
-    }
-
-    .station-info {
-        flex: 1 1 50%; /* Allow info to take more space */
-    }
-
-    .station-info h3 {
-        font-size: 1rem; /* Smaller station name */
-        margin-bottom: 0.2rem;
-    }
-
-    .station-meta {
-        font-size: 0.8rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
     }
 
     .station-stats {
-        flex: 0 1 auto; /* Don't grow, shrink if needed */
-        gap: 1rem; /* Tighter gap */
         margin: 0;
-        padding: 0 0.5rem;
-    }
-
-    .stat {
-        font-size: 1.2rem; /* Smaller numbers */
-    }
-
-    .stat-label {
-        font-size: 0.7rem;
+        align-self: flex-start;
     }
 
     .station-actions {
-        flex: 0 0 auto; /* Don't grow or shrink */
-        gap: 0.5rem;
-    }
-
-    .fav-btn, .map-link {
-        font-size: 1.2rem; /* Smaller buttons */
-        padding: 0.2rem;
+        align-self: flex-end;
     }
 }
