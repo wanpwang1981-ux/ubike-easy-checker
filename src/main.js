@@ -284,33 +284,33 @@ const app = {
     },
 
     renderAll() {
+        // --- Render Favorites (always show all, respecting only search term) ---
         const searchTerm = searchInputEl.value.toLowerCase();
+        const favoriteStations = this.stations
+            .filter(s => this.favorites.has(s.sno))
+            .filter(s => s.sna.toLowerCase().includes(searchTerm) || s.ar.toLowerCase().includes(searchTerm));
+        uiService.renderStations(favoriteStations, favoritesListEl, this.favorites);
+
+        // --- Render Nearby Stations (filtered) ---
         const selectedCity = cityFilterEl.value;
         const selectedDistrict = districtFilterEl.value;
 
-        const filteredStations = this.stations.filter(s => {
+        let nearbyStations = this.stations.filter(s => {
+            // Exclude stations that are already in favorites
+            if (this.favorites.has(s.sno)) return false;
+
             const cityMatch = !selectedCity || s.city === selectedCity;
             const districtMatch = !selectedDistrict || s.sarea === selectedDistrict;
             const searchMatch = s.sna.toLowerCase().includes(searchTerm) || s.ar.toLowerCase().includes(searchTerm);
             return cityMatch && districtMatch && searchMatch;
         });
 
-        const favoriteStations = [];
-        const nearbyStations = [];
-
-        filteredStations.forEach(s => {
-            if (this.favorites.has(s.sno)) {
-                favoriteStations.push(s);
-            } else {
-                nearbyStations.push(s);
-            }
-        });
-
         const noFiltersApplied = !searchTerm && !selectedCity && !selectedDistrict;
-        const limitedNearby = noFiltersApplied ? nearbyStations.slice(0, 10) : nearbyStations;
+        if (noFiltersApplied) {
+            nearbyStations = nearbyStations.slice(0, 10);
+        }
 
-        uiService.renderStations(favoriteStations, favoritesListEl, this.favorites);
-        uiService.renderStations(limitedNearby, nearbyListEl, this.favorites);
+        uiService.renderStations(nearbyStations, nearbyListEl, this.favorites);
     }
 };
 
