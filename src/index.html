@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouBike 即時查詢 (雙北)</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="main.js"></script>
+</head>
+<body>
+    <header>
+        <h1>YouBike 即時查詢 (台北市 & 新北市)</h1>
+        <p id="status-message">正在載入...</p>
+    </header>
+
+    <main>
+        <div class="controls">
+            <div class="filters">
+                <input type="text" id="search-input" placeholder="依站點、地址搜尋...">
+                <select id="city-filter">
+                    <option value="">所有縣市</option>
+                    <option value="Taipei">臺北市</option>
+                    <option value="New Taipei">新北市</option>
+                </select>
+                <select id="district-filter">
+                    <option value="">所有行政區</option>
+                </select>
+            </div>
+            <div class="favorites-io">
+                <button id="export-btn" title="匯出最愛">📤 匯出</button>
+                <button id="import-btn" title="匯入最愛">📥 匯入</button>
+                <input type="file" id="import-file-input" accept=".txt,application/json" style="display: none;">
+            </div>
+        </div>
+
+        <section id="favorites-section" class="station-list-section">
+            <h2>⭐ 我的最愛</h2>
+            <div id="favorites-list" class="station-list"></div>
+        </section>
+
+        <section id="nearby-section" class="station-list-section">
+            <h2>📍 附近站點</h2>
+            <div id="nearby-list" class="station-list"></div>
+        </section>
+    </main>
+
+    <footer>
+        <p>資料來源：臺北市政府資料開放平台、新北市政府資料開放平台</p>
+        <p>Jules the Pirate Coder | Version: <span id="version-display"></span></p>
+    </footer>
+
+</body>
+</html>
