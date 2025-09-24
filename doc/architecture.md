@@ -32,7 +32,7 @@
 1.  **資料抓取 (手動執行)**:
     -   開發者執行 `python fetch_data.py`，可選擇性地加上 `--source tdx` 參數。
     -   **預設 (`original`)**: 腳本分別向台北市及新北市的 YouBike 原始API 發送請求。
-    -   **TDX (`tdx`)**: 腳本向交通部TDX平台的API發送請求。此模式需要 `TDX_ACCESS_TOKEN` 環境變數。
+    -   **TDX (`tdx`)**: 腳本需要 `TDX_CLIENT_ID` 和 `TDX_CLIENT_SECRET` 環境變數。它會先向TDX認證伺服器請求一個暫時的 `access_token`，然後用該 token 向交通部TDX平台的API發送請求。
     -   腳本對收到的資料進行解析，並統一成一個標準化的結構。
     -   將合併且標準化後的資料寫入 `src/stations.json`。
 2.  **使用者開啟網頁 (初始化)**:

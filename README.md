@@ -75,14 +75,17 @@ python fetch_data.py
 ```
 
 #### **選項B：使用TDX平台API**
-使用TDX來源前，您必須先[申請TDX平台會員](https://tdx.transportdata.tw/register)並取得您的API金鑰 (Access Token)。
-接著，將您的金鑰設定為環境變數。
+使用TDX來源前，您必須先[申請TDX平台會員](https://tdx.transportdata.tw/register)並取得您的 `Client ID` 和 `Client Secret`。
+接著，將這兩組金鑰設定為環境變數。
+
 ```bash
 # Linux / macOS
-export TDX_ACCESS_TOKEN="您的TDX金鑰"
+export TDX_CLIENT_ID="您的Client ID"
+export TDX_CLIENT_SECRET="您的Client Secret"
 
 # Windows (Command Prompt)
-set TDX_ACCESS_TOKEN="您的TDX金鑰"
+set TDX_CLIENT_ID="您的Client ID"
+set TDX_CLIENT_SECRET="您的Client Secret"
 ```
 然後執行以下指令：
 ```bash

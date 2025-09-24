@@ -10,6 +10,7 @@ TAIPEI_API_URL = "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbi
 NEW_TAIPEI_API_URL = "https://data.ntpc.gov.tw/api/datasets/010e5b15-3823-4b20-b401-b1cf000550c5/json?size=2000"
 
 # TDX data sources
+TDX_AUTH_URL = "https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token"
 TDX_TAIPEI_URL = "https://tdx.transportdata.tw/api/basic/v2/Bike/Availability/City/Taipei"
 TDX_NEW_TAIPEI_URL = "https://tdx.transportdata.tw/api/basic/v2/Bike/Availability/City/NewTaipei"
 
@@ -86,13 +87,30 @@ def fetch_original_data():
 
     return all_stations
 
+def get_tdx_access_token(client_id, client_secret):
+    """Gets an access token from the TDX authentication endpoint."""
+    try:
+        response = requests.post(
+            TDX_AUTH_URL,
+            data={
+                "grant_type": "client_credentials",
+                "client_id": client_id,
+                "client_secret": client_secret,
+            },
+            headers={"content-type": "application/x-www-form-urlencoded"},
+        )
+        response.raise_for_status()
+        return response.json().get("access_token")
+    except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
+        print(f"Error getting TDX access token: {e}", file=sys.stderr)
+        return None
+
 def fetch_tdx_data(token):
-    """Fetches and processes data from the TDX APIs."""
+    """Fetches and processes data from the TDX APIs using a given token."""
     all_stations = []
     headers = {"authorization": f"Bearer {token}"}
     print("Fetching data from TDX sources...")
 
-    # Fetch and process Taipei data from TDX
     try:
         response_taipei = requests.get(TDX_TAIPEI_URL, headers=headers)
         response_taipei.raise_for_status()
@@ -102,7 +120,6 @@ def fetch_tdx_data(token):
     except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
         print(f"Could not fetch or process TDX Taipei data: {e}")
 
-    # Fetch and process New Taipei data from TDX
     try:
         response_new_taipei = requests.get(TDX_NEW_TAIPEI_URL, headers=headers)
         response_new_taipei.raise_for_status()
@@ -142,12 +159,15 @@ if __name__ == "__main__":
 
     stations_data = []
     if args.source == 'tdx':
-        access_token = os.environ.get("TDX_ACCESS_TOKEN")
-        if not access_token:
-            print("Error: TDX_ACCESS_TOKEN environment variable not set.", file=sys.stderr)
-            print("Please set it to your TDX API access token.", file=sys.stderr)
+        client_id = os.environ.get("TDX_CLIENT_ID")
+        client_secret = os.environ.get("TDX_CLIENT_SECRET")
+        if not client_id or not client_secret:
+            print("Error: TDX_CLIENT_ID and TDX_CLIENT_SECRET environment variables must be set.", file=sys.stderr)
             sys.exit(1)
-        stations_data = fetch_tdx_data(access_token)
+
+        access_token = get_tdx_access_token(client_id, client_secret)
+        if access_token:
+            stations_data = fetch_tdx_data(access_token)
     else:
         stations_data = fetch_original_data()
 
