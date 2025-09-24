@@ -11,8 +11,8 @@ NEW_TAIPEI_API_URL = "https://data.ntpc.gov.tw/api/datasets/010e5b15-3823-4b20-b
 
 # TDX data sources
 TDX_AUTH_URL = "https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token"
-TDX_TAIPEI_URL = "https://tdx.transportdata.tw/api/basic/v2/Bike/Availability/City/Taipei"
-TDX_NEW_TAIPEI_URL = "https://tdx.transportdata.tw/api/basic/v2/Bike/Availability/City/NewTaipei"
+TDX_TAIPEI_URL = "https://tdx.transportdata.tw/api/basic/v2/Bike/Availability/Taipei?&$format=JSON"
+TDX_NEW_TAIPEI_URL = "https://tdx.transportdata.tw/api/basic/v2/Bike/Availability/NewTaipei?&$format=JSON"
 
 OUTPUT_PATH = os.path.join('src', 'stations.json')
 
