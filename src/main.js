@@ -16,6 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const importBtn = document.getElementById('import-btn');
     const importFileInput = document.getElementById('import-file-input');
     const versionDisplayEl = document.getElementById('version-display');
+    const refreshFavoritesBtn = document.getElementById('refresh-favorites-btn');
+    const refreshNearbyBtn = document.getElementById('refresh-nearby-btn');
 
     // --- App State ---
     let stations = [];
@@ -184,12 +186,41 @@ document.addEventListener('DOMContentLoaded', () => {
             return cityMatch && districtMatch && searchMatch;
         });
 
+        // Sort by distance if available, but only for the nearby list
+        if (userPosition) {
+            nearbyStations.sort((a, b) => a.distance - b.distance);
+        }
+
         const noFiltersApplied = !searchTerm && !selectedCity && !selectedDistrict;
         if (noFiltersApplied) {
-            nearbyStations = nearbyStations.slice(0, 10);
+            nearbyStations = nearbyStations.slice(0, 5);
         }
 
         uiService.renderStations(nearbyStations, nearbyListEl);
+    }
+
+    async function handleRefresh() {
+        uiService.updateStatus('正在更新車位資料...');
+        try {
+            const newStationData = await apiService.fetchStations();
+
+            // Create a map for quick lookups of new data
+            const newStationMap = new Map(newStationData.map(s => [s.sno, s]));
+
+            // Update existing station data in place
+            stations.forEach(station => {
+                const updatedStation = newStationMap.get(station.sno);
+                if (updatedStation) {
+                    station.sbi = updatedStation.sbi;
+                    station.bemp = updatedStation.bemp;
+                }
+            });
+
+            renderAll();
+            uiService.updateStatus('車位資料更新成功！', false);
+        } catch (error) {
+            uiService.updateStatus('更新資料失敗，請稍後再試。', true);
+        }
     }
 
     function addEventListeners() {
@@ -203,6 +234,8 @@ document.addEventListener('DOMContentLoaded', () => {
         exportBtn.addEventListener('click', exportFavorites);
         importBtn.addEventListener('click', () => importFileInput.click());
         importFileInput.addEventListener('change', importFavorites);
+        refreshFavoritesBtn.addEventListener('click', handleRefresh);
+        refreshNearbyBtn.addEventListener('click', handleRefresh);
     }
 
     function exportFavorites() {

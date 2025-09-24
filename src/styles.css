@@ -105,6 +105,23 @@ input[type="text"]:focus, select:focus {
     padding-bottom: 0.5rem;
     margin-bottom: 1rem;
     font-size: 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.refresh-btn {
+    font-size: 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+.refresh-btn:hover {
+    background-color: var(--border-color);
 }
 
 .station-list {
