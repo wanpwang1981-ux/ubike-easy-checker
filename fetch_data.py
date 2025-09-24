@@ -24,7 +24,7 @@ def process_taipei_data(data):
     for station in data:
         if station.get('act') == '1':
             processed.append({
-                "sno": station.get('sno'), "sna": station.get('sna'), "sarea": station.get('sarea'),
+                "sno": station.get('sno'), "sna": station.get('sna', '').replace('YouBike2.0_', ''), "sarea": station.get('sarea'),
                 "ar": station.get('ar'), "lat": float(station.get('latitude', 0)), "lng": float(station.get('longitude', 0)),
                 "city": "Taipei", "sbi": int(station.get('available_rent_bikes', 0)), "bemp": int(station.get('available_return_bikes', 0)),
             })
@@ -36,7 +36,7 @@ def process_new_taipei_data(data):
     for station in data:
         if station.get('act') == '1':
             processed.append({
-                "sno": station.get('sno'), "sna": station.get('sna'), "sarea": station.get('sarea'),
+                "sno": station.get('sno'), "sna": station.get('sna', '').replace('YouBike2.0_', ''), "sarea": station.get('sarea'),
                 "ar": station.get('ar'), "lat": float(station.get('lat', 0)), "lng": float(station.get('lng', 0)),
                 "city": "New Taipei", "sbi": int(station.get('sbi', 0)), "bemp": int(station.get('bemp', 0)),
             })
