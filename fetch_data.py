@@ -77,7 +77,8 @@ def fetch_original_data():
         print(f"Could not fetch or process Taipei data: {e}")
 
     try:
-        response_new_taipei = requests.get(NEW_TAIPEI_API_URL)
+        # Added verify=False as a workaround for SSL certificate verification errors from this specific host.
+        response_new_taipei = requests.get(NEW_TAIPEI_API_URL, verify=False)
         response_new_taipei.raise_for_status()
         data_new_taipei = response_new_taipei.json()
         all_stations.extend(process_new_taipei_data(data_new_taipei))
@@ -159,8 +160,9 @@ if __name__ == "__main__":
 
     stations_data = []
     if args.source == 'tdx':
-        client_id = os.environ.get("TDX_CLIENT_ID")
-        client_secret = os.environ.get("TDX_CLIENT_SECRET")
+        client_id = os.environ.get("TDX_CLIENT_ID", "").strip().strip('"').strip("'")
+        client_secret = os.environ.get("TDX_CLIENT_SECRET", "").strip().strip('"').strip("'")
+
         if not client_id or not client_secret:
             print("Error: TDX_CLIENT_ID and TDX_CLIENT_SECRET environment variables must be set.", file=sys.stderr)
             sys.exit(1)
