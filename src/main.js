@@ -118,10 +118,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const favButtonTitle = isFav ? '從我的最愛中移除' : '加到我的最愛';
             const cityText = station.city === 'Taipei' ? '北市' : '新北';
 
+            const metaParts = [];
+            if (station.sarea) {
+                metaParts.push(station.sarea);
+            }
+            if (distanceText) {
+                metaParts.push(distanceText);
+            }
+            const metaText = metaParts.join(' | ');
+
             card.innerHTML = `
                 <div class="station-info">
                     <h3>${station.sna} <span class="station-city">(${cityText})</span></h3>
-                    <p class="station-meta">${station.sarea} | ${distanceText}</p>
+                    <p class="station-meta">${metaText}</p>
                     <p class="station-address">${station.ar}</p>
                 </div>
                 <div class="station-stats">
