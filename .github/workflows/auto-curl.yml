@@ -1,0 +1,13 @@
+name: 定時執行 curl
+
+on:
+  schedule:
+    - cron: '0 * * * *' # 每小時執行一次（UTC 時間）
+
+jobs:
+  curl_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 利用 curl 執行 API
+        run: |
+          curl -X POST http://localhost:3000/api/run-cvc-with-log -o analysis_log.json
