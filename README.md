@@ -66,34 +66,33 @@
     ```
 ---
 
-### 步驟3：抓取最新的YouBike資料 (必要步驟)
-此腳本提供兩種資料來源。請根據需求擇一執行。
+### 步驟3：抓取YouBike資料 (手動)
+若您想在**本機**測試或手動更新資料，請依照以下步驟操作。
 
 #### **選項A：使用原始API (預設)**
 ```bash
 python fetch_data.py
 ```
 
-#### **選項B：使用TDX平台API**
-使用TDX來源前，您必須先[申請TDX平台會員](https://tdx.transportdata.tw/register)並取得您的 `Client ID` 和 `Client Secret`。
-接著，將這兩組金鑰設定為環境變數。
+#### **選項B：使用TDX平台API (手動)**
+1.  **設定環境變數**：
+    您必須先[申請TDX平台會員](https://tdx.transportdata.tw/register)並取得您的 `Client ID` 和 `Client Secret`。
+    ```bash
+    # Linux / macOS
+    export TDX_CLIENT_ID="您的Client ID"
+    export TDX_CLIENT_SECRET="您的Client Secret"
 
-```bash
-# Linux / macOS
-export TDX_CLIENT_ID="您的Client ID"
-export TDX_CLIENT_SECRET="您的Client Secret"
-
-# Windows (Command Prompt)
-set TDX_CLIENT_ID="您的Client ID"
-set TDX_CLIENT_SECRET="您的Client Secret"
-```
-然後執行以下指令：
-```bash
-python fetch_data.py --source tdx
-```
+    # Windows (Command Prompt)
+    set TDX_CLIENT_ID="您的Client ID"
+    set TDX_CLIENT_SECRET="您的Client Secret"
+    ```
+2.  **執行腳本**：
+    ```bash
+    python fetch_data.py --source tdx
+    ```
 
 ### 步驟4：啟動本地伺服器
-為了讓應用程式能正確讀取本機的 `stations.json` 資料，請啟動內附的簡易伺服器：
+為了在本機瀏覽，請啟動內附的簡易伺服器：
 ```bash
 python server.py
 ```
@@ -103,7 +102,41 @@ python server.py
 打開您的網頁瀏覽器，並前往以下網址：
 [http://localhost:8000/src/](http://localhost:8000/src/)
 
-現在您可以開始使用此工具了！
+---
+## 自動資料更新 (GitHub Actions)
+
+本專案已設定好 GitHub Action，能**每小時自動抓取最新的 TDX 資料**並更新 `src/stations.json` 檔案。這讓您部署在網路上的版本能保持最新狀態。
+
+### 設定教學
+
+這個自動化流程需要您提供 TDX API 的金鑰。請依照以下步驟將金鑰安全地存放在 GitHub 中：
+
+1.  **前往 GitHub Repo 設定**：
+    在您的專案頁面，點擊右上角的 "Settings" 分頁。
+
+2.  **找到 Secrets and variables**：
+    在左側選單中，找到 "Secrets and variables"，然後點擊 "Actions"。
+
+3.  **新增 `TDX_CLIENT_ID`**：
+    -   點擊 "New repository secret" 按鈕。
+    -   **Name**: `TDX_CLIENT_ID`
+    -   **Secret**: 貼上您從TDX平台取得的 Client ID。
+    -   點擊 "Add secret"。
+
+4.  **新增 `TDX_CLIENT_SECRET`**：
+    -   再次點擊 "New repository secret"。
+    -   **Name**: `TDX_CLIENT_SECRET`
+    -   **Secret**: 貼上您的 Client Secret。
+    -   點擊 "Add secret"。
+
+### 如何確認自動更新成功？
+
+1.  **前往 Actions 分頁**：
+    在您的專案頁面，點擊上方的 "Actions" 分頁。
+2.  **查看 Workflow 紀錄**：
+    您會看到一個名為 "Update YouBike Data" 的 workflow。每一次成功的自動更新都會顯示一個**綠色的打勾 (✅)**。若更新失敗（通常是金鑰設定錯誤），則會顯示**紅色的叉叉 (❌)**。
+3.  **查看 Commit 紀錄**：
+    您也可以在專案首頁看到由 `github-actions[bot]` 自動產生的 commit，訊息為 "Automated data update"。
 
 ---
 
