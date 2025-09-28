@@ -2,27 +2,31 @@ name: Update YouBike Data
 
 on:
   schedule:
-    # Runs every hour
+    # 台灣時間：每小時的 0 分鐘執行一次 (例如 01:00, 02:00, ...)
     - cron: '0 * * * *'
+  # 允許在 GitHub 頁面手動點擊按鈕執行
   workflow_dispatch:
 
 jobs:
   update-data:
     runs-on: ubuntu-latest
     
-    # 🌟 權限設定：這是必須的，確保 GITHUB_TOKEN 有寫入權限 🌟
+    # 🌟 關鍵：明確授予 GITHUB_TOKEN 寫入權限 🌟
     permissions:
-      contents: write
+      contents: write # 確保工作流程可以寫入儲存庫內容
 
     steps:
       - name: Check out repository
-        # 🌟 關鍵：使用 actions/checkout@v4，並明確傳入您的 PAT 🌟
+        # 使用最新版的 checkout
         uses: actions/checkout@v4
         with:
+          # 🌟 確保使用您的個人存取權杖 (PAT) GH_PAT 🌟
+          # 這是繞過排程任務權限限制的最強保證。
           token: ${{ secrets.GH_PAT }}
-          # 這裡我們使用 PAT 來 checkout，確保後續操作能繼承這個強權限
+          # 取得完整的 Git 歷史，確保 Rebase/Auto-Commit 成功
+          fetch-depth: 0
 
-      - name: Set up Python
+      - name: Set up Python 3.9
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
@@ -31,58 +35,28 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Fetch new data
+        # 傳入 TDX 密鑰給 Python 腳本使用
         env:
           TDX_CLIENT_ID: ${{ secrets.TDX_CLIENT_ID }}
           TDX_CLIENT_SECRET: ${{ secrets.TDX_CLIENT_SECRET }}
-        # 確保 fetch_data.py 會確實產生或修改 src/stations.json
+        # 執行抓取資料的腳本
         run: python fetch_data.py --source tdx
 
-      # 🌟 關鍵新步驟：使用 git-auto-commit-action 🌟
+      # 🌟 核心解決方案：自動 Commit, Pull/Rebase, 和 Push 🌟
       - name: Commit and Push Changes Automatically
+        # 使用專門處理 Git 流程的 Action
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          # 提交的檔案：
+          # 指定要追蹤和提交的檔案
           file_pattern: 'src/stations.json'
-          # 提交訊息：
+          # 設定提交訊息
           commit_message: 'Automated data update'
-          # Git 使用者名稱：
+          # 設定提交者的名稱
           commit_user_name: 'github-actions[bot]'
-          # Git E-mail：
+          # 設定提交者的 Email
           commit_user_email: 'github-actions[bot]@users.noreply.github.com'
-          # 這裡會自動使用 actions/checkout 步驟設定好的憑證 (即您的 GH_PAT) 進行推送
-      - name: Commit and push if changed
-        # 請確保這裡使用 PAT 或 GITHUB_TOKEN，避免 403 錯誤再次出現
-        env:
-          GITHUB_TOKEN_FOR_PUSH: ${{ secrets.GH_PAT }}
-          
-        run: |
-          # 1. 配置 Git 身份
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          
-          # 2. 準備要 commit 的檔案
-          git add src/stations.json
-          
-          # 3. 檢查是否有變更
-          if git diff --staged --quiet; then
-            echo "No changes to commit. Exiting."
-          else
-            git commit -m "Automated data update"
-            
-            # 🌟 關鍵修改：先執行 Rebase 拉取遠端變更 🌟
-            # 使用 PAT 來驗證 pull/rebase 操作
-            REMOTE_URL=$(git remote get-url origin)
-            CLEAN_URL=${REMOTE_URL#https://}
-            PUSH_URL="https://${GITHUB_TOKEN_FOR_PUSH}@${CLEAN_URL}"
-            
-            # 暫時將 origin 的 URL 設定為帶有 PAT 的 URL
-            git remote set-url origin $PUSH_URL
-            
-            echo "Pulling latest changes via rebase..."
-            # 執行拉取並 Rebase
-            git pull --rebase origin main
-            
-            # 4. 推送變更
-            git push origin main
-            echo "Successfully pushed changes."
-          fi
+          # 這個 Action 會自動處理：
+          # 1. 檢查檔案是否有變動。
+          # 2. 如果有變動，執行 git add 和 git commit。
+          # 3. 執行 git pull --rebase (解決 'fetch first' 錯誤)。
+          # 4. 執行 git push (使用 actions/checkout 步驟提供的 PAT 進行驗證，解決 '403 denied' 錯誤)。
