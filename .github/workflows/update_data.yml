@@ -19,7 +19,7 @@ jobs:
         # 雖然 actions/checkout@v3 預設會使用它，但明確指定更穩健
         uses: actions/checkout@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }} # 雖然預設就是這個，但確保它被使用
+          token: ${{ secrets.GH_PAT }}  # 雖然預設就是這個，但確保它被使用
 
       # ... (其他步驟保持不變) ...
 
