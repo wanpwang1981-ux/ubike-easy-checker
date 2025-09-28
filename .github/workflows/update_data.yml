@@ -50,3 +50,39 @@ jobs:
           # Git E-mail：
           commit_user_email: 'github-actions[bot]@users.noreply.github.com'
           # 這裡會自動使用 actions/checkout 步驟設定好的憑證 (即您的 GH_PAT) 進行推送
+      - name: Commit and push if changed
+        # 請確保這裡使用 PAT 或 GITHUB_TOKEN，避免 403 錯誤再次出現
+        env:
+          GITHUB_TOKEN_FOR_PUSH: ${{ secrets.GH_PAT }}
+          
+        run: |
+          # 1. 配置 Git 身份
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # 2. 準備要 commit 的檔案
+          git add src/stations.json
+          
+          # 3. 檢查是否有變更
+          if git diff --staged --quiet; then
+            echo "No changes to commit. Exiting."
+          else
+            git commit -m "Automated data update"
+            
+            # 🌟 關鍵修改：先執行 Rebase 拉取遠端變更 🌟
+            # 使用 PAT 來驗證 pull/rebase 操作
+            REMOTE_URL=$(git remote get-url origin)
+            CLEAN_URL=${REMOTE_URL#https://}
+            PUSH_URL="https://${GITHUB_TOKEN_FOR_PUSH}@${CLEAN_URL}"
+            
+            # 暫時將 origin 的 URL 設定為帶有 PAT 的 URL
+            git remote set-url origin $PUSH_URL
+            
+            echo "Pulling latest changes via rebase..."
+            # 執行拉取並 Rebase
+            git pull --rebase origin main
+            
+            # 4. 推送變更
+            git push origin main
+            echo "Successfully pushed changes."
+          fi
