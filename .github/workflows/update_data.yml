@@ -2,7 +2,7 @@ name: Update YouBike Data
 
 on:
   schedule:
-    # 台灣時間：每小時的 0 分鐘執行一次 (例如 01:00, 02:00, ...)
+    # Runs every hour
     - cron: '0 * * * *'
   # 允許在 GitHub 頁面手動點擊按鈕執行
   workflow_dispatch:
@@ -13,17 +13,16 @@ jobs:
     
     # 🌟 關鍵：明確授予 GITHUB_TOKEN 寫入權限 🌟
     permissions:
-      contents: write # 確保工作流程可以寫入儲存庫內容
+      contents: write
 
     steps:
       - name: Check out repository
-        # 使用最新版的 checkout
+        # 使用專門 Action 處理 checkout
         uses: actions/checkout@v4
         with:
-          # 🌟 確保使用您的個人存取權杖 (PAT) GH_PAT 🌟
-          # 這是繞過排程任務權限限制的最強保證。
+          # 🌟 使用您的 PAT，確保高權限驗證 (解決 403) 🌟
           token: ${{ secrets.GH_PAT }}
-          # 取得完整的 Git 歷史，確保 Rebase/Auto-Commit 成功
+          # 取得完整的 Git 歷史，這是 Auto-Commit Action 處理衝突所需要的
           fetch-depth: 0
 
       - name: Set up Python 3.9
@@ -35,28 +34,18 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Fetch new data
-        # 傳入 TDX 密鑰給 Python 腳本使用
         env:
           TDX_CLIENT_ID: ${{ secrets.TDX_CLIENT_ID }}
           TDX_CLIENT_SECRET: ${{ secrets.TDX_CLIENT_SECRET }}
-        # 執行抓取資料的腳本
         run: python fetch_data.py --source tdx
 
-      # 🌟 核心解決方案：自動 Commit, Pull/Rebase, 和 Push 🌟
+      # 🌟 核心解決方案：自動處理 Commit, Pull/Rebase, 和 Push 🌟
       - name: Commit and Push Changes Automatically
-        # 使用專門處理 Git 流程的 Action
+        # 使用專門 Action，它會自動處理 'fetch first' 錯誤
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          # 指定要追蹤和提交的檔案
           file_pattern: 'src/stations.json'
-          # 設定提交訊息
           commit_message: 'Automated data update'
-          # 設定提交者的名稱
           commit_user_name: 'github-actions[bot]'
-          # 設定提交者的 Email
           commit_user_email: 'github-actions[bot]@users.noreply.github.com'
-          # 這個 Action 會自動處理：
-          # 1. 檢查檔案是否有變動。
-          # 2. 如果有變動，執行 git add 和 git commit。
-          # 3. 執行 git pull --rebase (解決 'fetch first' 錯誤)。
-          # 4. 執行 git push (使用 actions/checkout 步驟提供的 PAT 進行驗證，解決 '403 denied' 錯誤)。
+          # 這個 Action 會在 push 前自動執行 git pull --rebase 來解決您現在的錯誤。
