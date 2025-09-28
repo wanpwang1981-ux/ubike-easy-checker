@@ -9,14 +9,19 @@ on:
 jobs:
   update-data:
     runs-on: ubuntu-latest
+    # 🌟 在 Job 層級新增 permissions 區塊 🌟
+    permissions:
+      contents: write # 授予 GITHUB_TOKEN 寫入內容的權限
+
     steps:
       - name: Check out repository
+        # 🌟 確保 checkout 使用 GITHUB_TOKEN 🌟
+        # 雖然 actions/checkout@v3 預設會使用它，但明確指定更穩健
         uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          token: ${{ secrets.GITHUB_TOKEN }} # 雖然預設就是這個，但確保它被使用
+
+      # ... (其他步驟保持不變) ...
 
       - name: Install dependencies
         run: pip install -r requirements.txt
