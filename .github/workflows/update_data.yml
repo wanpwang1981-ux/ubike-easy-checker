@@ -9,19 +9,19 @@ on:
 jobs:
   update-data:
     runs-on: ubuntu-latest
-    # 🌟 在 Job 層級新增 permissions 區塊 🌟
     permissions:
-      contents: write # 授予 GITHUB_TOKEN 寫入內容的權限
+      contents: write # 雖然使用 PAT，但保留這個設定總是比較好
 
     steps:
       - name: Check out repository
-        # 🌟 確保 checkout 使用 GITHUB_TOKEN 🌟
-        # 雖然 actions/checkout@v3 預設會使用它，但明確指定更穩健
         uses: actions/checkout@v3
         with:
-          token: ${{ secrets.GH_PAT }}  # 雖然預設就是這個，但確保它被使用
-
-      # ... (其他步驟保持不變) ...
+          token: ${{ secrets.GH_PAT }}
+          
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -32,16 +32,9 @@ jobs:
           TDX_CLIENT_SECRET: ${{ secrets.TDX_CLIENT_SECRET }}
         run: python fetch_data.py --source tdx
 
-      #- name: Commit and push if changed
-       # run: |
-         # git config --global user.name 'github-actions[bot]'
-         # git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-         # git add src/stations.json
-        #  git diff --staged --quiet || (git commit -m "Automated data update" && git push)
-      - name: Commit and push if changed
-        # 🌟 新增 env 區塊來存取 GH_PAT 🌟
+      # 🌟 這裡只有一個 Commit 和 Push 步驟 🌟
+      - name: Commit and push with PAT
         env:
-          # 將您的 PAT 密鑰引入環境變數，命名為 GITHUB_TOKEN_FOR_PUSH
           GITHUB_TOKEN_FOR_PUSH: ${{ secrets.GH_PAT }}
           
         run: |
@@ -52,22 +45,18 @@ jobs:
           # 2. 準備要 commit 的檔案
           git add src/stations.json
           
-          # 3. 檢查是否有變更，如果有，則進行 commit
+          # 3. 檢查是否有變更
           if git diff --staged --quiet; then
             echo "No changes to commit. Exiting."
           else
             git commit -m "Automated data update"
             
-            # 4. 🌟 關鍵步驟：使用 PAT 推送 🌟
-            # 取得儲存庫的遠端 URL (例如 github.com/user/repo)
+            # 4. 關鍵：使用 PAT 進行驗證並推送到遠端
             REMOTE_URL=$(git remote get-url origin)
-            # 移除 URL 前面的 https://
             CLEAN_URL=${REMOTE_URL#https://}
             
-            # 建立新的推送 URL，將 PAT 嵌入其中：
-            # https://<PAT>@github.com/user/repo
             PUSH_URL="https://${GITHUB_TOKEN_FOR_PUSH}@${CLEAN_URL}"
             
-            # 使用新的 URL 進行推送
             git push $PUSH_URL
+            echo "Successfully pushed changes using PAT."
           fi
