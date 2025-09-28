@@ -9,15 +9,19 @@ on:
 jobs:
   update-data:
     runs-on: ubuntu-latest
+    
+    # 🌟 權限設定：這是必須的，確保 GITHUB_TOKEN 有寫入權限 🌟
     permissions:
-      contents: write # 雖然使用 PAT，但保留這個設定總是比較好
+      contents: write
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        # 🌟 關鍵：使用 actions/checkout@v4，並明確傳入您的 PAT 🌟
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.GH_PAT }}
-          
+          # 這裡我們使用 PAT 來 checkout，確保後續操作能繼承這個強權限
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -30,33 +34,19 @@ jobs:
         env:
           TDX_CLIENT_ID: ${{ secrets.TDX_CLIENT_ID }}
           TDX_CLIENT_SECRET: ${{ secrets.TDX_CLIENT_SECRET }}
+        # 確保 fetch_data.py 會確實產生或修改 src/stations.json
         run: python fetch_data.py --source tdx
 
-      # 🌟 這裡只有一個 Commit 和 Push 步驟 🌟
-      - name: Commit and push with PAT
-        env:
-          GITHUB_TOKEN_FOR_PUSH: ${{ secrets.GH_PAT }}
-          
-        run: |
-          # 1. 配置 Git 使用 bot 的身分
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          
-          # 2. 準備要 commit 的檔案
-          git add src/stations.json
-          
-          # 3. 檢查是否有變更
-          if git diff --staged --quiet; then
-            echo "No changes to commit. Exiting."
-          else
-            git commit -m "Automated data update"
-            
-            # 4. 關鍵：使用 PAT 進行驗證並推送到遠端
-            REMOTE_URL=$(git remote get-url origin)
-            CLEAN_URL=${REMOTE_URL#https://}
-            
-            PUSH_URL="https://${GITHUB_TOKEN_FOR_PUSH}@${CLEAN_URL}"
-            
-            git push $PUSH_URL
-            echo "Successfully pushed changes using PAT."
-          fi
+      # 🌟 關鍵新步驟：使用 git-auto-commit-action 🌟
+      - name: Commit and Push Changes Automatically
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          # 提交的檔案：
+          file_pattern: 'src/stations.json'
+          # 提交訊息：
+          commit_message: 'Automated data update'
+          # Git 使用者名稱：
+          commit_user_name: 'github-actions[bot]'
+          # Git E-mail：
+          commit_user_email: 'github-actions[bot]@users.noreply.github.com'
+          # 這裡會自動使用 actions/checkout 步驟設定好的憑證 (即您的 GH_PAT) 進行推送
