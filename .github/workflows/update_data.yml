@@ -38,3 +38,36 @@ jobs:
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add src/stations.json
           git diff --staged --quiet || (git commit -m "Automated data update" && git push)
+      - name: Commit and push if changed
+        # 🌟 新增 env 區塊來存取 GH_PAT 🌟
+        env:
+          # 將您的 PAT 密鑰引入環境變數，命名為 GITHUB_TOKEN_FOR_PUSH
+          GITHUB_TOKEN_FOR_PUSH: ${{ secrets.GH_PAT }}
+          
+        run: |
+          # 1. 配置 Git 使用 bot 的身分
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # 2. 準備要 commit 的檔案
+          git add src/stations.json
+          
+          # 3. 檢查是否有變更，如果有，則進行 commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit. Exiting."
+          else
+            git commit -m "Automated data update"
+            
+            # 4. 🌟 關鍵步驟：使用 PAT 推送 🌟
+            # 取得儲存庫的遠端 URL (例如 github.com/user/repo)
+            REMOTE_URL=$(git remote get-url origin)
+            # 移除 URL 前面的 https://
+            CLEAN_URL=${REMOTE_URL#https://}
+            
+            # 建立新的推送 URL，將 PAT 嵌入其中：
+            # https://<PAT>@github.com/user/repo
+            PUSH_URL="https://${GITHUB_TOKEN_FOR_PUSH}@${CLEAN_URL}"
+            
+            # 使用新的 URL 進行推送
+            git push $PUSH_URL
+          fi
